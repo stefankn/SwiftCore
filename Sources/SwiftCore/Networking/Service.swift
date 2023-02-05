@@ -13,6 +13,10 @@ open class Service {
     
     public typealias Parameters = [(name: String, value: CustomStringConvertible)]
     
+    public enum ServiceError: Error {
+        case unauthorized
+    }
+    
     
     
     // MARK: - Properties
@@ -82,6 +86,14 @@ open class Service {
         return request
     }
     
+    open func validate(_ response: URLResponse, data: Data) throws {
+        guard let response = response as? HTTPURLResponse else { return }
+        
+        if response.statusCode == 401 {
+            throw ServiceError.unauthorized
+        }
+    }
+    
     
     
     // MARK: - Private Functions
@@ -90,7 +102,8 @@ open class Service {
         let request = try await prepare(request)
         let session = URLSession(configuration: configuration)
         
-        let (data, _) = try await session.data(for: request)
+        let (data, response) = try await session.data(for: request)
+        try validate(response, data: data)
         
         return try JSONDecoder().decode(Response.self, from: data)
     }
