@@ -37,26 +37,27 @@ open class Service {
     // MARK: - Functions
     
     public func get<Response: Decodable>(_ path: String, parameters: Parameters? = nil) async throws -> Response {
-        try await request(URLRequest(method: .get, url: url(for: path, parameters: parameters)))
+        try await request(URLRequest(method: .get, url: url(for: path, parameters: parameters)), decode: decode)
     }
     
     public func post<Body: Encodable, Response: Decodable>(_ path: String, parameters: Parameters? = nil, body: Body) async throws -> Response {
-        try await request(URLRequest(method: .post, url: url(for: path, parameters: parameters)), body: body)
+        try await request(URLRequest(method: .post, url: url(for: path, parameters: parameters)), body: body, encode: encode, decode: decode)
+    }
+    
+    public func post(_ path: String, parameters: Parameters? = nil) async throws {
+        try await request(URLRequest(method: .post, url: url(for: path, parameters: parameters)), decode: { _ in })
     }
     
     public func put<Body: Encodable, Response: Decodable>(_ path: String, parameters: Parameters? = nil, body: Body) async throws -> Response {
-        try await request(URLRequest(method: .put, url: url(for: path, parameters: parameters)), body: body)
+        try await request(URLRequest(method: .put, url: url(for: path, parameters: parameters)), body: body, encode: encode, decode: decode)
     }
     
     public func patch<Body: Encodable, Response: Decodable>(_ path: String, parameters: Parameters? = nil, body: Body) async throws -> Response {
-        try await request(URLRequest(method: .patch, url: url(for: path, parameters: parameters)), body: body)
+        try await request(URLRequest(method: .patch, url: url(for: path, parameters: parameters)), body: body, encode: encode, decode: decode)
     }
     
     public func request<Body: Encodable, Response: Decodable>(_ request: URLRequest, body: Body) async throws -> Response {
-        var request = request
-        request.httpBody = try JSONEncoder().encode(body)
-        
-        return try await self.request(request)
+        try await self.request(request, body: body, encode: encode, decode: decode)
     }
     
     public func url(for path: String, parameters: Parameters? = nil) throws -> URL {
@@ -94,17 +95,35 @@ open class Service {
         }
     }
     
+    open func encode<Body: Encodable>(_ body: Body, request: URLRequest) throws -> URLRequest {
+        var request = request
+        
+        let encoder = JSONEncoder()
+        request.httpBody = try encoder.encode(body)
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        return request
+    }
+    
+    open func decode<Response: Decodable>(_ data: Data) throws -> Response {
+        try JSONDecoder().decode(Response.self, from: data)
+    }
+    
     
     
     // MARK: - Private Functions
     
-    private func request<Response: Decodable>(_ request: URLRequest) async throws -> Response {
+    private func request<Body, Response>(_ request: URLRequest, body: Body, encode: (Body, URLRequest) throws -> URLRequest, decode: @escaping (Data) throws -> Response) async throws -> Response {
+        try await self.request(try encode(body, request), decode: decode)
+    }
+    
+    private func request<Response>(_ request: URLRequest, decode: @escaping (Data) throws -> Response) async throws -> Response {
         let request = try await prepare(request)
         let session = URLSession(configuration: configuration)
         
         let (data, response) = try await session.data(for: request)
         try validate(response, data: data)
         
-        return try JSONDecoder().decode(Response.self, from: data)
+        return try decode(data)
     }
 }
