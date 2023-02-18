@@ -14,7 +14,7 @@ open class Service {
     public typealias Parameters = [(name: String, value: CustomStringConvertible)]
     
     public enum ServiceError: Error {
-        case unauthorized
+        case failure(HTTPStatus)
     }
     
     
@@ -56,6 +56,10 @@ open class Service {
         try await request(URLRequest(method: .patch, url: url(for: path, parameters: parameters)), body: body, encode: encode, decode: decode)
     }
     
+    public func delete(_ path: String, parameters: Parameters? = nil) async throws {
+        try await request(URLRequest(method: .delete, url: url(for: path, parameters: parameters)), decode: { _ in })
+    }
+    
     public func request<Body: Encodable, Response: Decodable>(_ request: URLRequest, body: Body) async throws -> Response {
         try await self.request(request, body: body, encode: encode, decode: decode)
     }
@@ -90,8 +94,8 @@ open class Service {
     open func validate(_ response: URLResponse, data: Data) throws {
         guard let response = response as? HTTPURLResponse else { return }
         
-        if response.statusCode == 401 {
-            throw ServiceError.unauthorized
+        if !response.status.isSuccess {
+            throw ServiceError.failure(response.status)
         }
     }
     
