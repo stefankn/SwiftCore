@@ -40,8 +40,24 @@ open class Service {
         try await request(URLRequest(method: .get, url: url(for: path, parameters: parameters)), decode: decode)
     }
     
+    public func get<Response: Decodable>(_ url: URL) async throws -> Response {
+        try await request(URLRequest(method: .get, url: url), decode: decode)
+    }
+    
+    public func get<Response>(_ path: String, parameters: Parameters? = nil, decode: @escaping (Data) throws -> Response) async throws -> Response {
+        try await request(URLRequest(method: .get, url: url(for: path, parameters: parameters)), decode: decode)
+    }
+    
     public func post<Body: Encodable, Response: Decodable>(_ path: String, parameters: Parameters? = nil, body: Body) async throws -> Response {
         try await request(URLRequest(method: .post, url: url(for: path, parameters: parameters)), body: body, encode: encode, decode: decode)
+    }
+    
+    public func post<Response: Decodable>(_ path: String, parameters: Parameters? = nil) async throws -> Response {
+        try await request(URLRequest(method: .post, url: url(for: path, parameters: parameters)), decode: decode)
+    }
+    
+    public func post<Response>(_ path: String, parameters: Parameters? = nil, decode: @escaping (Data) throws -> Response) async throws -> Response {
+        try await request(URLRequest(method: .post, url: url(for: path, parameters: parameters)), decode: decode)
     }
     
     public func post(_ path: String, parameters: Parameters? = nil) async throws {
@@ -50,6 +66,10 @@ open class Service {
     
     public func put<Body: Encodable, Response: Decodable>(_ path: String, parameters: Parameters? = nil, body: Body) async throws -> Response {
         try await request(URLRequest(method: .put, url: url(for: path, parameters: parameters)), body: body, encode: encode, decode: decode)
+    }
+    
+    public func put<Response: Decodable>(_ path: String, parameters: Parameters? = nil) async throws -> Response {
+        try await request(URLRequest(method: .put, url: url(for: path, parameters: parameters)), decode: decode)
     }
     
     public func patch<Body: Encodable, Response: Decodable>(_ path: String, parameters: Parameters? = nil, body: Body) async throws -> Response {
