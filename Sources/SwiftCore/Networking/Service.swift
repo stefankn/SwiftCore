@@ -44,6 +44,10 @@ open class Service {
         try await request(URLRequest(method: .get, url: url), decode: decode)
     }
     
+    public func get<Response>(_ url: URL, decode: @escaping (Data) throws -> Response) async throws -> Response {
+        try await request(URLRequest(method: .get, url: url), decode: decode)
+    }
+    
     public func get<Response>(_ path: String, parameters: Parameters? = nil, decode: @escaping (Data) throws -> Response) async throws -> Response {
         try await request(URLRequest(method: .get, url: url(for: path, parameters: parameters)), decode: decode)
     }
