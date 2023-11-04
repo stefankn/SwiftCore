@@ -14,7 +14,7 @@ open class Service {
     public typealias Parameters = [(name: String, value: CustomStringConvertible)]
     
     public enum ServiceError: Error {
-        case failure(HTTPStatus)
+        case failure(HTTPStatus, Data)
     }
     
     
@@ -119,7 +119,7 @@ open class Service {
         guard let response = response as? HTTPURLResponse else { return }
         
         if !response.status.isSuccess {
-            throw ServiceError.failure(response.status)
+            throw ServiceError.failure(response.status, data)
         }
     }
     
