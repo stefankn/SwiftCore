@@ -41,6 +41,14 @@ extension UserDefaults {
         object(forKey: key.rawValue) != nil
     }
     
+    public func value<T: RawRepresentable>(_ type: T.Type, for key: Key) -> T? where T.RawValue == String {
+        if let string = string(for: key) {
+            return T(rawValue: string)
+        } else {
+            return nil
+        }
+    }
+    
     public func string(for key: Key) -> String? {
         string(forKey: key.rawValue)
     }
@@ -55,6 +63,10 @@ extension UserDefaults {
         } else {
             return nil
         }
+    }
+    
+    public func set<T: RawRepresentable>(_ value: T?, for key: Key) where T.RawValue == String {
+        set(value?.rawValue, for: key)
     }
     
     public func set(_ string: String?, for key: Key) {
