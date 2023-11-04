@@ -181,6 +181,7 @@ public class Keychain {
     /// - parameter key: The key under which to store the data.
     /// - returns: true if storing was successful, else false
     ///
+    @discardableResult
     public func set(_ value: String, for key: String) -> Bool {
         if let data = value.data(using: .utf8) {
             return set(data, for: key)
@@ -209,6 +210,7 @@ public class Keychain {
     /// - parameter key: The key under which to store the data.
     /// - returns: true if storing was successful, else false
     ///
+    @discardableResult
     public func set(_ data: Data, for key: String) -> Bool {
         var queryDictionary = queryDictionary(for: key)
         queryDictionary[kSecValueData as String] = data
