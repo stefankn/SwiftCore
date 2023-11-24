@@ -60,6 +60,10 @@ open class Service {
         try await request(URLRequest(method: .post, url: url(for: path, parameters: parameters)), decode: decode)
     }
     
+    public func post<Response: Decodable>(_ path: String, parameters: Parameters? = nil, body: MultipartFormData) async throws -> Response {
+        try await request(URLRequest(method: .post, url: url(for: path, parameters: parameters)), body: body)
+    }
+    
     public func post<Response>(_ path: String, parameters: Parameters? = nil, decode: @escaping (Data) throws -> Response) async throws -> Response {
         try await request(URLRequest(method: .post, url: url(for: path, parameters: parameters)), decode: decode)
     }
@@ -88,6 +92,10 @@ open class Service {
         try await self.request(request, body: body, encode: encode, decode: decode)
     }
     
+    public func request<Response: Decodable>(_ request: URLRequest, body: MultipartFormData) async throws -> Response {
+        try await self.request(request, body: body, encode: encode, decode: decode)
+    }
+    
     public func url(for path: String, parameters: Parameters? = nil) throws -> URL {
         if let url = URL(string: path, relativeTo: baseURL) {
             var components = URLComponents(url: url, resolvingAgainstBaseURL: true)
@@ -109,9 +117,6 @@ open class Service {
     open func prepare(_ request: URLRequest) async throws -> URLRequest {
         var request = request
         request.cachePolicy = .reloadIgnoringLocalCacheData
-        request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
-        request.setValue("application/json", forHTTPHeaderField: "Accept")
-        
         return request
     }
     
@@ -121,6 +126,14 @@ open class Service {
         if !response.status.isSuccess {
             throw ServiceError.failure(response.status, data)
         }
+    }
+    
+    open func encode(_ body: MultipartFormData, request: URLRequest) throws -> URLRequest {
+        var request = request
+        request.setValue(body.httpContentTypeHeaderValue, forHTTPHeaderField: "Content-Type")
+        request.httpBody = body.httpBody
+        
+        return request
     }
     
     open func encode<Body: Encodable>(_ body: Body, request: URLRequest) throws -> URLRequest {
