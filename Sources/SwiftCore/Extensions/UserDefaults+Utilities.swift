@@ -49,6 +49,14 @@ extension UserDefaults {
         }
     }
     
+    public func object<T: Decodable>(_ type: T.Type, for key: Key) throws -> T? {
+        if let data = data(for: key) {
+            return try JSONDecoder().decode(type, from: data)
+        } else {
+            return nil
+        }
+    }
+    
     public func string(for key: Key) -> String? {
         string(forKey: key.rawValue)
     }
@@ -88,6 +96,15 @@ extension UserDefaults {
     public func set(_ date: Date?, for key: Key) {
         if let date = date {
             set(ISO8601DateFormatter().string(from: date), for: key)
+        } else {
+            remove(for: key)
+        }
+    }
+    
+    public func set<T: Encodable>(object: T?, for key: Key) throws {
+        if let object = object {
+            let data = try JSONEncoder().encode(object)
+            set(data, for: key)
         } else {
             remove(for: key)
         }
